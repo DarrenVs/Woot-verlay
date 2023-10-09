@@ -46,8 +46,8 @@ function update(message) {
 
     var content = "";
     // split message into key tuples
-    const keys = message.split(/[()]/);
-    keys.filter(element => element.length != 0).forEach(element => {
+    const keysFromMessage = message.split(/[()]/);
+    keysFromMessage.filter(element => element.length != 0).forEach(element => {
         // split key into seperate values
         var keydata = element.split(':');
         content += "(" + keydata[0] + " " + keydata[1].substring(0, 4) + " " + keydata[2] + ") ";
@@ -65,8 +65,17 @@ function update(message) {
             else { activeKey.style.borderRadius = 0; }
             // draw active state of key
             activeKey.style.backgroundColor = keydata[2] == 1 ? "var(--active)" : null;
+
+            // displayPressure(activeKey, pressure/100);
         }
 
+        for (i in keys) {
+            if (keys[i].keyCode == keydata[0]) {
+
+                keys[i].progress = keydata[1];
+                keys[i].keyState = keydata[2] == 1;
+            }
+        }
     })
 
     if(allowDebug){

@@ -9,6 +9,10 @@ class Key {
         this.width = width;
         this.height = height;
         this.fillDir = fillDir;
+
+        // Interactive/Rendering variables
+        this.progress = 0;
+        this.keyState = false;
     }
 }
 
