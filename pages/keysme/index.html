@@ -5,17 +5,18 @@
 <head>
   <!-- page information -->
   <meta charset="UTF-8">
-  <title>DJ | KB Overlay</title>
+  <title>KeysMe x Wooting | KB Overlay</title>
   <meta name="description" content="A customisable pressure sensitive display for your Wooting keyboard!">
-  <link rel="shortcut icon" type="image/png" href="pages/globaldefault/pageicon.ico" />
+  <link rel="shortcut icon" type="image/png" href="../globaldefault/pageicon.ico" />
   <meta name="viewport" content="width=device-width">
   <meta name="theme-color" content="#131313">
 
   <!-- css stylesheets -->
-  <link rel='stylesheet' type='text/css' href="pages/globaldefault/styles.css">
+  <link rel='stylesheet' type='text/css' href="../globaldefault/styles.css">
+  <link rel = "stylesheet" type = "text/css" href = "keysme.css">
   <link rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-  <script type="text/javascript" src="pages/globaldefault/data/wootingLayouts.js"></script>
+  <script type="text/javascript" src="../globaldefault/data/wootingLayouts.js"></script>
 </head>
 
 <!-- BODY -->
@@ -124,29 +125,30 @@
     </div>
 
     <!-- icons -->
-    <i class="material-symbols-outlined" onclick="toggleVisiblity('keyPool', this)">add_circle
+    <i class="material-symbols-outlined" onclick="toggleVisiblity('keyPool')">add_circle
       <span class="infoField" data-i18n="menus.addkeys.title">Add keys</span></i>
-    <i class="material-symbols-outlined" onclick="toggleVisiblity('settings', this)">settings<span
+    <i class="material-symbols-outlined" onclick="toggleVisiblity('settings')">settings<span
         class="infoField" data-i18n="menus.customise.title">Customise</span></i>
-    <i class="material-symbols-outlined" onclick="toggleVisiblity('presets', this)">bookmarks<span
+    <i class="material-symbols-outlined" onclick="toggleVisiblity('presets')">bookmarks<span
         class="infoField" data-i18n="menus.presets.title">Presets</span></i>
-    <i class="material-symbols-outlined" onclick="toggleVisiblity('lanSettings', this)">magic_tether<span
+    <i class="material-symbols-outlined" onclick="toggleVisiblity('lanSettings')">magic_tether<span
         class="infoField" data-i18n="menus.lanconnection.title">LAN connection</span></i>
-    <i class="material-symbols-outlined" onclick="toggleVisiblity('optionalInfo', this)">visibility<span
+    <i class="material-symbols-outlined" onclick="toggleVisiblity('optionalInfo')">visibility<span
         class="infoField" data-i18n="menus.extrainfo.title">Toggle info</span></i>
-    <i class="material-symbols-outlined" onclick="toggleVisiblity('languages', this)">translate<span
+    <i class="material-symbols-outlined" onclick="toggleVisiblity('languages')">translate<span
       class="infoField" data-i18n="menus.language.title">Language</span></i>
   </div>
 
   <span id="selectionhint" data-i18n="edit.selectionhint">[Shift click] to select multiple keys.&emsp;&emsp;|&emsp;&emsp;[CTRL + A] to select all keys.</span>
 
+
   <!-- Key option dialog -->
   <div id="keyOptionDialog">
-    <div><span data-i18n="edit.rename">Rename:</span>
+    <span data-i18n="edit.rename">Rename:
       <input type="text" id="keyLabel" placeholder="New name" style="width: 100%"
         onkeydown="if(event.keyCode === 13) updateKeyLabel(this)">
-    </div>
-    <div><span data-i18n="edit.filldir">Fill dir.</span>
+    </span>
+    <span data-i18n="edit.filldir">Fill dir.
       <table class="directions">
         <tr>
           <td id="topLeft" onclick=updateKeySettings(this.id)>🡦</td>
@@ -170,7 +172,7 @@
           <td id="horizontal" onclick=updateKeySettings(this.id)>⥍</td>
         </tr>
       </table>
-    </div>
+    </span>
 
     <span class="deleteButton" onclick=removeKey() data-i18n="edit.remove">Remove</span>
   </div>
@@ -179,28 +181,26 @@
 
 <!-- SCRIPTING -->
 <!-- mouse event based script -->
-<script type="text/javascript" src="pages/globaldefault/js/mousehandlers.js"></script>
+<script type="text/javascript" src="../globaldefault/js/mousehandlers.js"></script>
 
 <!-- key pool script -->
-<script type="text/javascript" src="pages/globaldefault/js/keypool.js"></script>
+<script type="text/javascript" src="../globaldefault/js/keypool.js"></script>
 
 <!-- key menu and key customisation -->
-<script type="text/javascript" src="pages/globaldefault/js/keymenu.js"></script>
+<script type="text/javascript" src="../globaldefault/js/keymenu.js"></script>
 
 <!-- keyboard related scripts -->
-<script type="text/javascript" src="pages/globaldefault/js/keyboard.js"></script>
+<script type="text/javascript" src="../globaldefault/js/keyboard.js"></script>
 
 <!-- websockets related scripts -->
-<script type="text/javascript" src="pages/globaldefault/js/websocket.js"></script>
+<script type="text/javascript" src="../globaldefault/js/websocket.js"></script>
 
 <!-- toolbar settings related scripts -->
-<script type="text/javascript" src="pages/globaldefault/js/toolbarfunctions.js"></script>
+<script type="text/javascript" src="../globaldefault/js/toolbarfunctions.js"></script>
 
-<!-- animation scripts -->
-<script type="text/javascript" src="pages/globaldefault/js/animations.js"></script>
 
 <!-- translations -->
 <script src="https://unpkg.com/@andreasremdt/simple-translator@latest/dist/umd/translator.min.js"></script>
-<script type="text/javascript" src="pages/globaldefault/data/languages.js" defer></script>
+<script type="text/javascript" src="../globaldefault/data/languages.js" defer></script>
 
 </html>

@@ -5,6 +5,9 @@ using System.Text.RegularExpressions;
 using WootingAnalogSDKNET;
 using NeatInput.Windows;
 using NeatInput.Windows.Events;
+using System.Globalization;
+using SharpDX.XInput;
+using System.Diagnostics;
 
 
 namespace Woot_verlay
@@ -14,9 +17,8 @@ namespace Woot_verlay
         // global variables
         private static bool runSystem = true;
         private static bool runNonwooting = false;
-        private static DialogResult openToLan;
+        private static bool openToLan;
         private static List<TcpClient> activeConnections = new List<TcpClient>();
-
 
         /// <summary>
         ///  The entry point for the application.
@@ -26,32 +28,33 @@ namespace Woot_verlay
         {   
             // initialise application
             ApplicationConfiguration.Initialize();
+            Application.EnableVisualStyles();
+            Application.SetHighDpiMode(HighDpiMode.DpiUnaware);
+            Application.SetCompatibleTextRenderingDefault(false);
+            SetCulture(CultureInfo.CurrentCulture.Name);
 
-            // load WootingAnalogSDK
-            var (noDevices, error) = WootingAnalogSDK.Initialise();
-            // print error if no Wooting devices found
-            if (noDevices < 0)
+            // Check for Wooting compatibility
+            // Load WootingAnalogSDK
+            var (numDevices, error) = WootingAnalogSDK.Initialise();
+
+            // Show configuration window
+            var configForm = new SetupForm(numDevices < 0);
+            if (configForm.ShowDialog() != DialogResult.OK)
             {
-                if (MessageBox.Show("Wooting Analog SDK failed to initialise. \nPlease install Wootility or the SDK manually!\n\nWould you like to continue as a normal input overlay?", "Woot-verlay - no SDK error", MessageBoxButtons.OKCancel) == DialogResult.OK)
-                {
-                    runNonwooting = true;
-                }
-                else {
-                    System.Environment.Exit(1);
-                }
+                // User closed the window or cancelled
+                Environment.Exit(1);
             }
 
-            // create keyboard hooks and listen for input
-            var keyboardReceiver = new KeyListener();
-            var inputSource = new InputSource(keyboardReceiver);
-            inputSource.Listen();
+            // Get user selections
+            runNonwooting = configForm.UseNonWooting;
+            openToLan = configForm.EnableLanMode;
+            string ip = openToLan ? "0.0.0.0" : "127.0.0.1";
 
-            // ask user if they want to run open to LAN or just this pc
-            openToLan = MessageBox.Show("Do you want to use LAN mode? LAN means that you will be able to view your keypresses on other devices (useful for secondary pc streaming). Pressing NO (Default) will only allow the overlay to work on this device." , "Woot-verlay - Mode Selection", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            string ip = "127.0.0.1";
-            if(openToLan == DialogResult.Yes){
-                ip = "0.0.0.0";
-                MessageBox.Show("Right click Woot-verlay in your system tray see check your local IP address." + " Open Woot-verlay on another device and click the port tab in the toolbar.", "Info", MessageBoxButtons.OK);
+            if (configForm.EnableLanMode)
+            {
+                MessageBox.Show(Properties.Resources.ConfigForm_LanInfo,
+                    "Info",
+                    MessageBoxButtons.OK);
             }
 
             // initialise server
@@ -61,17 +64,20 @@ namespace Woot_verlay
                 server.Start();
             }
             catch (Exception) {
-                MessageBox.Show("Uh oh. Woot-verlay server cannot be started. \nPlease close already running Woot-verlays or server apps.", "Woot-verlay - already running error");
+                MessageBox.Show(Properties.Resources.ConfigForm_ServerError, "Woot-verlay - already running error");
                 System.Environment.Exit(1);
             }
 
             // run client handler and main program loop
+            // create keyboard hooks and listen for input
+            var keyboardReceiver = new KeyListener();
+            var inputSource = new InputSource(keyboardReceiver);
+            inputSource.Listen();
+
             ThreadPool.QueueUserWorkItem(o => handleClients(server));
             ThreadPool.QueueUserWorkItem(o => runLoop(keyboardReceiver));
 
             // start application in the tray
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new WootTrayApp());
         }
 
@@ -79,8 +85,10 @@ namespace Woot_verlay
         /// <summary>
         /// Sends a correctly structured message to a JavaSript websocket
         /// </summary>
-        private static void sendMessage(NetworkStream stream, string inputText)
+        private static bool sendMessage(TcpClient client, string inputText)
         {
+            if(!client.Connected) return false;
+            NetworkStream stream = client.GetStream();
 
             byte[] sendBytes = Encoding.UTF8.GetBytes(inputText);
             byte lengthHeader = 0;
@@ -119,7 +127,11 @@ namespace Woot_verlay
             responseArray.AddRange(lengthCount);
             responseArray.AddRange(sendBytes);
 
-            stream.Write(responseArray.ToArray(), 0, responseArray.Count);
+            try {
+                stream.Write(responseArray.ToArray(), 0, responseArray.Count);
+            } catch (Exception) { return false; };
+            
+            return true;
         }
 
 
@@ -143,7 +155,7 @@ namespace Woot_verlay
         {
             while (runSystem)
             {
-                // listen for a new connection
+                // wait and listen for a new connection
                 TcpClient client = server.AcceptTcpClient();
                 NetworkStream stream = client.GetStream();
                 bool hasHandshaked = false;
@@ -174,6 +186,7 @@ namespace Woot_verlay
                         stream.Write(response, 0, response.Length);
                         hasHandshaked = true;
                         activeConnections.Add(client);
+                        Debug.WriteLine("Client connected, there are now " + activeConnections.Count() + " connection/s.");
                     }
                 }
             }
@@ -184,21 +197,33 @@ namespace Woot_verlay
         /// Main program loop that reads Wooting SDK input and sends info to clients
         /// </summary>
         private static void runLoop(KeyListener keyboardReceiver) {
+            // wooting setup
+            List<TcpClient> disconnected = new List<TcpClient>();
+
+            // non wooting setup
+            var controller = new Controller(UserIndex.One);
+            HashSet<int> controllerKeys = new HashSet<int>();
+            StringBuilder contentBuilder = new StringBuilder();
+            if (runNonwooting) Debug.WriteLine("Running non-wooting. Gamepad detected: " + controller.IsConnected);
+
             // run SDK loop for continuous update stream
             bool shownEmpty = false;
             while (runSystem)
             {
                 // remove inactive clients
-                List<TcpClient> disconnected = activeConnections.FindAll(curClient => !curClient.Connected);
+                //disconnected = activeConnections.FindAll(curClient => !curClient.Connected);
                 if (disconnected.Count > 0)
                 {
-                    Console.WriteLine(disconnected.Count + " client/s disconnected. " + activeConnections.Count + " connections remaining.\n");
                     disconnected.ForEach(client => activeConnections.Remove(client));
+                    Debug.WriteLine(disconnected.Count + " client/s disconnected. " + activeConnections.Count + " connections remaining.\n");
                 }
+                disconnected.Clear();
+                
+                contentBuilder.Clear();
 
                 if (!runNonwooting)
                 {
-                    // read analogue buffer and start sending keys
+                    // read analog buffer and start sending keys
                     var (keys, readErr) = WootingAnalogSDK.ReadFullBuffer(20);
                     if (readErr == WootingAnalogResult.Ok)
                     {
@@ -207,24 +232,16 @@ namespace Woot_verlay
                         {
                             if (keys.Count > 0)
                             {
-                                String content = "";
                                 foreach (var analog in keys)
                                 {
-                                    var pressed = (keyboardReceiver.activeKeys.Contains(analog.Item1)) ? 1 : 0;
-                                    content += "(" + analog.Item1 + ":" + analog.Item2 + ":" + pressed + ")";
+                                    var pressed = keyboardReceiver.activeKeys.Contains(analog.Item1) ? 1 : 0;
+                                    contentBuilder.Append($"({analog.Item1}:{analog.Item2}:{pressed})");
                                 }
                                 // message info to client for display
-                                activeConnections.ForEach(curClient => sendMessage(curClient.GetStream(), content));
                                 shownEmpty = false;
                             }
-                            else if (!shownEmpty)
-                            {
-                                // allow a single empty line after all keys are released
-                                activeConnections.ForEach(curClient => sendMessage(curClient.GetStream(), ""));
-                                shownEmpty = true;
-                            }
                         }
-                        catch (Exception) { Console.WriteLine("Client unavailable - removing next loop."); }
+                        catch (Exception) { Debug.WriteLine("Client unavailable - removing next loop."); }
                     }
                     else
                     {
@@ -234,28 +251,96 @@ namespace Woot_verlay
                    
                 }
                 else {
+                    // default and generic HE keyboards
                     try
                     {
-                        String content = "";
+                        if (controller.IsConnected) {
+                            var state = controller.GetState();
+                            // Get the joystick positions
+                            var leftThumbX = state.Gamepad.LeftThumbX / 32767.0f; // Normalise to -1.0 to 1.0
+                            var leftThumbY = state.Gamepad.LeftThumbY / 32767.0f;
+                            var rightThumbX = state.Gamepad.RightThumbX / 32767.0f;
+                            var rightThumbY = state.Gamepad.RightThumbY / 32767.0f;
+
+                            UpdateJoystickAxis(leftThumbX, KeyListener.keyMaps.A, KeyListener.keyMaps.D, controllerKeys, contentBuilder);
+                            UpdateJoystickAxis(leftThumbY, KeyListener.keyMaps.S, KeyListener.keyMaps.W, controllerKeys, contentBuilder);
+                            UpdateJoystickAxis(rightThumbX, KeyListener.keyMaps.Left, KeyListener.keyMaps.Right, controllerKeys, contentBuilder);
+                            UpdateJoystickAxis(rightThumbY, KeyListener.keyMaps.Down, KeyListener.keyMaps.Up, controllerKeys, contentBuilder);
+                        }
                         foreach (var key in keyboardReceiver.activeKeys) {
-                            content += "(" + key + ":1:1)";
+                            if(controllerKeys.Contains(key)) continue;
+                            contentBuilder.Append($"({key}:1:1)");
                         }
                         foreach (var key in keyboardReceiver.inActiveKeys)
                         {
-                            content += "(" + key + ":0:0)";
+                            contentBuilder.Append($"({key}:0:0)");
                         }
                         keyboardReceiver.inActiveKeys.Clear();
                         // message info to client for display
-                        activeConnections.ForEach(curClient => sendMessage(curClient.GetStream(), content));
-                        shownEmpty = false;
+                        if(contentBuilder.Length > 0) shownEmpty = false;
                     }
-                    catch (Exception) { Console.WriteLine("Client unavailable - removing next loop."); }
+                    catch (Exception) { Debug.WriteLine("Client unavailable - removing next loop."); }
                 }
+
+                // send data to clients
+                if (contentBuilder.Length > 0 || !shownEmpty)
+                {
+                    activeConnections.ForEach(curClient =>
+                    {
+                        if (!sendMessage(curClient, contentBuilder.ToString()))
+                        {
+                            disconnected.Add(curClient);
+                        }
+                    });
+                    if (contentBuilder.Length == 0) shownEmpty = true;
+                }
+  
                 // control refresh speed
-                Thread.Sleep(25);
+                Thread.Sleep(10);
             }
         }
 
+        /// <summary>
+        /// Converts joystick axis values to key presses for a pair of keys
+        /// </summary>
+        static void UpdateJoystickAxis(float axisValue, KeyListener.keyMaps negativeKey, KeyListener.keyMaps positiveKey, HashSet<int> controllerKeys, StringBuilder contentBuilder)
+        {
+            if (axisValue < 0)
+            {
+                controllerKeys.Add((int)negativeKey);
+                contentBuilder.Append($"({(int)negativeKey}:{-axisValue}:1)");
+                contentBuilder.Append($"({(int)positiveKey}:0:0)");
+                controllerKeys.Remove((int)positiveKey);
+            }
+            else if (axisValue > 0)
+            {
+                controllerKeys.Add((int)positiveKey);
+                contentBuilder.Append($"({(int)positiveKey}:{axisValue}:1)");
+                contentBuilder.Append($"({(int)negativeKey}:0:0)");
+                controllerKeys.Remove((int)negativeKey);
+            }
+            else {
+                if (controllerKeys.Contains((int)positiveKey)){
+                    contentBuilder.Append($"({(int)positiveKey}:0:0)");
+                    controllerKeys.Remove((int)positiveKey);
+                }
+                if (controllerKeys.Contains((int)negativeKey))
+                {
+                    contentBuilder.Append($"({(int)negativeKey}:0:0)");
+                    controllerKeys.Remove((int)negativeKey);
+                };
+            }
+        }
+
+
+
+        /// <summary>
+        /// Allows language swapping through resource files
+        /// </summary>
+        private static void SetCulture(string cultureCode)
+        {
+            Thread.CurrentThread.CurrentUICulture = new CultureInfo(cultureCode);
+        }
 
         /// <summary>
         /// Class <c>KeyListener</c> listens to key presses and stores active ones
@@ -263,15 +348,18 @@ namespace Woot_verlay
         internal class KeyListener : IKeyboardEventReceiver
         {
             // convert key events to Wooting key numbers
-            enum keyMaps
+            public enum keyMaps
             {
                 A = 4, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, // Z = 29
                 D1, D2, D3, D4, D5, D6, D7, D8, D9, D0, // 0 key is 39
-                Return, Escape, Back, Tab, Space, OemMinus, OemPlus, OemOpenBrackets, OemCloseBrackets, Oem5, // 50 = non-US-1
+                Return, Escape, Back, Tab, Space, OemMinus, OemPlus, Oemplus = 46, OemOpenBrackets, OemCloseBrackets, Oem6 = 48, Oem5, // 50 = non-US-1. 48 (OemCloseBrackets) swapped for oem6
                 Oem1 = 51, Oem7, Oemtilde, Oemcomma, OemPeriod, OemQuestion, Capital,
                 F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12,
-                PrintScreen, Scroll, MediaPlayPause, Insert, Home, PageUp, Delete, End, PageDown,
-                Right, Left, Down, Up, NumLock, Apps = 101,
+                PrintScreen, Scroll, MediaPlayPause = 72, Pause = 72, Insert, Home, PageUp, Delete, End, PageDown,
+                Right, Left, Down, Up, NumLock,
+                Divide, Multiply, Subtract, Add, NumPad1 = 89, NumPad2, NumPad3, NumPad4, NumPad5, NumPad6, NumPad7, NumPad8, NumPad9, NumPad0, Decimal,
+                Apps = 101,
+                F13 = 104, F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24,
                 LControlKey = 224, LShiftKey, LMenu, LWin, RControlKey, RShiftKey, RMenu, RWin
             }
 
@@ -282,11 +370,12 @@ namespace Woot_verlay
             // listen key upstrokes and downstrokes
             public void Receive(KeyboardEvent @event)
             {
-                // Console.WriteLine(@event.Key.ToString());
                 keyMaps keyCode;
                 keyMaps.TryParse(@event.Key.ToString(), out keyCode);
+                //Debug.WriteLine("Input: " + @event.Key.ToString());
                 if ((int)keyCode > 0)
                 {
+                    //Debug.WriteLine("Output: " + @event.Key.ToString() + " " + (int)keyCode);
                     if (@event.State == NeatInput.Windows.Processing.Keyboard.Enums.KeyStates.Up && activeKeys.Contains((int)keyCode))
                     { // remove key on upstroke
                         activeKeys.Remove((int)keyCode);
@@ -311,23 +400,24 @@ namespace Woot_verlay
             // constructor
             public WootTrayApp()
             {
-                // create menu strip with contents
-                ToolStripMenuItem toolStripIpItem = new ToolStripMenuItem("Running local mode.", null, null, "");
-                if (openToLan == DialogResult.Yes)
-                {
-                    string IP = GetLocalIPAddress();
-                    toolStripIpItem = new ToolStripMenuItem("LAN IP: " + IP, null, null, "");
-                }
-                var strip = new ContextMenuStrip()
-                {
-                    Items =
-                        {
-                            toolStripIpItem,
-                            new ToolStripMenuItem("Stop overlay", null, new EventHandler(Exit), "EXIT")
+                // set language
+                SetCulture(CultureInfo.CurrentCulture.Name);
 
-                        }
-                };
-                strip.BackColor = Color.FromArgb(255, 20, 21, 24); ;
+                // create menu strip with contents
+                string ipMessage = openToLan
+                ? string.Format(Properties.Resources.Tray_LanIP, GetLocalIPAddress())
+                : Properties.Resources.Tray_LocalMode;
+
+                    var strip = new ContextMenuStrip()
+                    {
+                        Items =
+                {
+                    new ToolStripMenuItem(ipMessage, null, null, ""),
+                    new ToolStripMenuItem(Properties.Resources.Tray_StopOverlay, null, new EventHandler(Exit), "EXIT")
+                }
+                    };
+
+                strip.BackColor = Color.FromArgb(255, 20, 21, 24);
                 strip.ForeColor = Color.White;
                 strip.RenderMode = ToolStripRenderMode.System;
 
@@ -348,6 +438,7 @@ namespace Woot_verlay
                 Application.Exit();
             }
         }
+
     }
 
 

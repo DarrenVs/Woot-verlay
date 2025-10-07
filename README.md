@@ -1,88 +1,91 @@
-# Woot-verlay
-Pressure sensitive display for the analog values of your Wooting keyboard! Visit the page to mess around, or add it as a fully functional overlay to your streams.
-[Check out a demonstration here](https://www.youtube.com/watch?v=62ZL6NmN-KM)
+![logo](https://github.com/DjCrqss/Woot-verlay/assets/25734612/d654f249-a332-493f-99d2-3837875cf767) 
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/DjCrqss/Woot-verlay/total?style=flat) 
+![Static Badge](https://img.shields.io/badge/OBS%20-%20Compatible-black?link=https%3A%2F%2Fdjcrqss.github.io%2FWoot-verlay%2Fpages%2Fosulay%2F) 
+![Static Badge](https://img.shields.io/badge/platform%20-%20Windows-blue?style=flat) 
+![Static Badge](https://img.shields.io/badge/fork%20-%20ready-yellow) 
+![Static Badge](https://img.shields.io/badge/OSU!%20-%20ready-hotpink?link=https%3A%2F%2Fdjcrqss.github.io%2FWoot-verlay%2Fpages%2Fosulay%2F) 
 
-## Running the app
-This application uses a localTCP server that must be kept running while using the website to display your values.
+Pressure-sensitive display for the analogue values of your Wooting keyboard! Visit the page to mess around, or add it as a fully functional overlay to your streams.
+[Check out a demonstration here](https://www.youtube.com/watch?v=62ZL6NmN-KM) 
+<br><br>
+This application only runs on Windows, but thanks to Sainan, here is a Linux altenative: [Woot-verlay Linux](https://github.com/AnalogSense/wootverlay-alt-server)
+
+
+# Features
+
+<img src="https://github.com/DjCrqss/Woot-verlay/assets/25734612/8f93d8ac-c4e4-46c7-8a97-e1d58e331941" width="60%" align="right"/>
+
+### Customisation and Presets
+Woot-verlay is made to be extremely customisable. Right-click on keys to rename, change the fill direction or delete them.
+Drag the keys to shift them around. Grab the green or orange dotted edges of a key to resize.  Shift click to multi-select.
+<br>
+
+Presets are available to save and import. They can be found [here in the project wiki!](https://github.com/DjCrqss/Woot-verlay/wiki/Presets)
+
+<br clear="both"/><br><br>
+<img src="https://github.com/user-attachments/assets/53f7b1ef-bba5-43d6-8f1e-b44bc58bc63f" width="60%" align="left"/>
+
+### OSU-lay
+A special mode for OSU! players that displays the Z and X keys with a histogram of the pressure values! View here and add to your streams using this link:
+[OSU-lay page.](https://djcrqss.github.io/Woot-verlay/pages/osulay/)
+
+Make sure to make the display size in OBS at least 1300x700.
+
+
+<br clear="both"/><br><br>
+<img src="https://github.com/DjCrqss/Woot-verlay/assets/25734612/dde0c084-6368-48a5-a633-597200856cd0" width="60%" align="right"/>
+
+### OBS and LAN connections
+The OBS plugin allows streaming to Twitch and other platforms with this as an overlay on top! View the running instructions in the section below.
+Using LAN,  you can host the overlay on another PC that could be recording, or even on a mobile device as a mini external display!
+
+<br clear="both"/><br><br>
+<img src="https://github.com/DjCrqss/Woot-verlay/assets/25734612/2c203a0d-1ed8-428d-b648-8ec1ff22eb24" width="60%" align="left"/>
+
+### Settings
+When your mouse is on the page, a popup appears at the top middle of the screen.
+Click + to add extra keys. Use the cog to change global settings, the bookmark icon to copy and paste new profiles, the WiFi/LAN icon to connect to your keyboard from an external device, and the eye to see extra stats below the keyboard.
+
+<br clear="both"/><br>
+
+
+
+# Running Woot-verlay
+This application uses a local TCP server that must be kept running while using the website to display your values.
 Download and run the exe file in the releases section. It should pop up in your system tray!
-You may have to accept the warnings to run the program, as I can not afford a digital signature, but if you are worried, feel free to download the source code and build the program yourself! To accept the smartscreen warning, click 'more info' at the top left, then 'run anyway'.
+You may have to accept the warnings to run the program, as I can not afford a digital signature, but if you are worried, feel free to download the source code and build the program yourself! To accept the SmartScreen warning, click 'more info' at the top left, then 'run anyway'.
 
-You may have to update to the DotNet6 framework if you are not on Windows 11. However this is a short one-time process with instructions upon launching the app. You will also need to have Wootility (from Wooting) installed.
-
-
-### Website view
+You may have to update to the .NET 6.0 framework if you aren't on Windows 11. However, this is a short one-time process with instructions upon launching the app. You will also need to have Wootility (from Wooting) installed.
+<br>After running the system tray app, choose one of the following viewing methods:
+### Option A: Website view
 - [Open this link!](https://djcrqss.github.io/Woot-verlay/index.html)
 - If the link above does not work, you may have to download the html and css file and open it manually,
-- Right click on the icon and click quit once you are done.
+- Right-click on the icon and click quit once you are done.
 
-### OBS overlay
+### Option B: OBS overlay
 This uses a browser source.
 - Add a new Browser Source to your scene and label it.
 - Set the URL to `https://djcrqss.github.io/Woot-verlay/index.html`
-- I recommend setting width to 800 and height to 600, and leave the next two options unticked
-If it doesn't work after some time, open this menu back up and click 'Refresh cache of current page'
+- I recommend setting the width to 800 and height to 600 and leaving the next two options unticked.
+- Configure your setup by right-clicking on the overlay/source and clicking 'Interact'.
 
-Configure your setup by right-clicking on the overlay and clicking 'Interact'.
+If you want to setup multiple instances of the overlay with different layouts/settings you can add the `profile` parameter to the URL. `https://djcrqss.github.io/Woot-verlay/index.html?profile=p1` will be different from `https://djcrqss.github.io/Woot-verlay/index.html?profile=p2`. The `?profile=SOME_ID` will determine the profile using the saved names in the presets menu.
 
-### LAN connections
-If you want to use the overlay on a different computer to the one running the server, you will need to connect them to the same network. This will allow you to host the overlay on another PC that could be recording, or even on a mobile device as a mini external display!
-
-Unfortunately, due to the way web security works, I would have to purchase and distribute a digital certificate to allow you to connect to the server. This is not something I can afford to do, so you will have to download this repository. Above the code, click on the green 'Code' button, then click 'Download ZIP'. Extract the files and double-click on the html file. 
-
-When launching Woot-verlay client, make sure to press 'Yes' on the first popup. Go into your system tray (bottom right) and right-click on Wootverlay, it should now show your local IP.
-On another device, open the [site](https://djcrqss.github.io/Woot-verlay/index.html) and in the toolbar at the top, click on the WiFi icon and enter the IP then press connect. It will take a few seconds, but after a while, try pressing a key on your keyboard and it should show up on the site!
-
-
-## Configuring your settings
-When your mouse is on the page, a popup appears at the top middle of the screen.
-- Click + to bring the key sidebar out where you can add extra keys by clicking on them
-- Click the cog to change global settings
-    - You can change colours, rounding, and transition speed.
-- Click the bookmark icon to copy and paste new profiles.
-- Click the WiFi/LAN icon to connect to your keyboard from an external device.
-- Click the eye to see extra stats below the keyboard.
-
-Right-click on a key to open a menu to change the fill direction or delete the key.
-Click and drag on the keys to shift them around, and hover, then drag the green or orange dotted handles on the edges of a key to resize it.
-
-----
-## Profile presets
-Here are example profile presets. To use them, copy the text, then click the presets option in the toolbar (looks like bookmarks) and paste it in the box that appears. Then click save to apply it.
-
-
-### Default gaming
-```
-[[4,"A",96,72,1,1,"bottom"],[22,"S",168,72,1,1,"bottom"],[7,"D",240,72,1,1,"bottom"],[225,"🡅",0,0,1.6,1,"bottomRight"],[224,"Ctrl",0,72,1.2,1,"topRight"],[44,"__",324,72,8.8,1,"bottom"],[26,"W",144,0,1,1,"bottom"]]
-```
-
-### TKL Keyboard
-```
-[[26,"W",204,144,1,1,"bottom"],[4,"A",156,216,1,1,"bottom"],[22,"S",228,216,1,1,"bottom"],[7,"D",300,216,1,1,"bottom"],[225,"🡅",24,288,2.6,1,"centre"],[224,"Ctrl",24,360,1.4,1,"centre"],[44,"__",312,360,6.6,1,"bottom"],[41,"Esc",24,72,1,1,"centre"],[30,"1",96,72,1,1,"horizontal"],[31,"2",168,72,1,1,"horizontal"],[33,"4",312,72,1,1,"horizontal"],[32,"3",240,72,1,1,"horizontal"],[34,"5",384,72,1,1,"horizontal"],[35,"6",456,72,1,1,"horizontal"],[36,"7",528,72,1,1,"horizontal"],[37,"8",600,72,1,1,"horizontal"],[38,"9",672,72,1,1,"horizontal"],[39,"0",744,72,1,1,"horizontal"],[45,"-",816,72,1,1,"centre"],[46,"+",888,72,1,1,"centre"],[42,"Back",960,72,2.2,1,"centre"],[43,"Tab",24,144,1.6,1,"centre"],[20,"Q",132,144,1,1,"bottomRight"],[8,"E",276,144,1,1,"bottomLeft"],[21,"R",348,144,1,1,"centre"],[23,"T",420,144,1,1,"centre"],[28,"Y",492,144,1,1,"centre"],[24,"U",564,144,1,1,"centre"],[12,"I",636,144,1,1,"centre"],[18,"O",708,144,1,1,"centre"],[19,"P",780,144,1,1,"centre"],[47,"[",852,144,1,1,"vertical"],[48,"]",924,144,1,1,"vertical"],[49,"\\",996,144,1.6,1,"centre"],[57,"Caps",24,216,2,1,"centre"],[9,"F",372,216,1,1,"left"],[10,"G",444,216,1,1,"centre"],[11,"H",516,216,1,1,"centre"],[13,"J",588,216,1,1,"centre"],[14,"K",660,216,1,1,"centre"],[15,"L",732,216,1,1,"centre"],[51,"; :",804,216,1,1,"centre"],[52,"' \"",876,216,1,1,"centre"],[40,"Enter",948,216,2.4,1,"centre"],[25,"V",408,288,1,1,"topLeft"],[27,"X",264,288,1,1,"top"],[6,"C",336,288,1,1,"topLeft"],[29,"Z",192,288,1,1,"topRight"],[5,"B",480,288,1,1,"centre"],[16,"M",624,288,1,1,"centre"],[17,"N",552,288,1,1,"centre"],[54,",",696,288,1,1,"centre"],[55,".",768,288,1,1,"centre"],[56,"/ ?",840,288,1,1,"centre"],[82,"▲",912,288,3,1,"bottom"],[227,"Win",120,360,1.4,1,"centre"],[226,"Alt",216,360,1.4,1,"centre"],[1033,"Fn",720,360,1.4,1,"centre"],[79,"▶",1008,360,1.4,1,"left"],[80,"◀",816,360,1.4,1,"right"],[81,"▼",912,360,1.4,1,"top"]]
-```
-
-### DPAD
-```
-[[4,"A",12,84,1,1,"right"],[22,"S",84,156,1,1,"top"],[225,"🡅",456,96,1.6,1,"bottomRight"],[44,"__",84,84,1,1,"centre"],[26,"W",84,12,1,1,"bottom"],[7,"D",156,84,1,1,"left"],[79,"▶",564,84,1,1,"left"],[80,"◀",420,84,1,1,"right"],[81,"▼",492,156,1,1,"top"],[82,"▲",492,12,1,1,"bottom"],[56,"/ ?",492,84,1,1,"undefined"]]
-```
-
-### OSU
-```
-[[29,"Z",48,84,3.4,1,"bottom"],[27,"X",804,84,3.4,1,"bottom"]]
-```
-```
-[[9,"F",120,60,1.2,1.8,"left"],[7,"D",60,36,1.2,2.6,"right"],[13,"J",324,60,1.2,1.8,"right"],[14,"K",384,36,1.2,2.6,"left"]]
-```
-
-Please feel free to send in your own ones and I will update this list!
+If it doesn't work after some time, open this menu back up and click 'Refresh cache of current page'. 
+Note: customisations do not transfer across browsers or from browsers to OBS as they use their own local storage. You can go into presets and copy to clipboard, then paste it into your OBS in the same place.
 <br><br>
+## Using the LAN connector
+To access the visuals across devices
+Launch the Woot-verlay client and press 'Yes' on the first popup. Go into your system tray (bottom right) and right-click on Wootverlay, it should now show your local IP.
+On another device, open the [site](https://djcrqss.github.io/Woot-verlay/index.html) and in the toolbar at the top, click on the WiFi icon and enter the IP then press connect. 
 
----
+## Troubleshooting
+Having any issues, such as pressure levels not showing when in certain games? Check out the [troubleshooting wiki](https://github.com/DjCrqss/Woot-verlay/wiki/Troubleshooting) or create an issue!
 
-## Planned features
-- Preset configurations as buttons and ability to save and load colour scheme too
-- Showing actuation points
-- Custom key names
-- Rewrite code to be less spaghetti
+
+
+
+
 
 
 
